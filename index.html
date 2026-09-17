@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -672,10 +672,10 @@
     width: 100%;
     border: none;
     background: #ffffff;
+    min-height: 0;
   }
-  
+
   .preview-overlay .preview-container .preview-console-monaco {
-    height: 40px;
     background: #1a1a1a;
     border-top: 2px solid #333;
     display: none;
@@ -683,9 +683,65 @@
     cursor: text;
     position: relative;
     z-index: 9999;
+    overflow: visible;
+    flex-shrink: 0;
+    height: 40px;
+    transition: height 0.15s ease-out;
   }
   .preview-overlay .preview-container .preview-console-monaco.active {
     display: flex;
+  }
+
+  .preview-console-log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 10px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #d4d4d4;
+    background: #141414;
+    border-bottom: 1px solid #2a2a2a;
+    min-height: 0;
+    user-select: text;
+    -webkit-user-select: text;
+    display: none;
+    position: relative;
+    z-index: 1;
+  }
+  .preview-console-log.has-content {
+    display: block;
+  }
+  .preview-console-log::-webkit-scrollbar { width: 8px; }
+  .preview-console-log::-webkit-scrollbar-track { background: #141414; }
+  .preview-console-log::-webkit-scrollbar-thumb { background: #4a4a4a; border-radius: 4px; }
+  .preview-console-log::-webkit-scrollbar-thumb:hover { background: #5a5a5a; }
+  .preview-console-log .log-entry {
+    padding: 1px 4px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: 'Consolas', 'Courier New', monospace;
+  }
+  .preview-console-log .log-entry.log { color: #d4d4d4; }
+  .preview-console-log .log-entry.info { color: #4fa8d8; }
+  .preview-console-log .log-entry.warn { color: #f5b041; }
+  .preview-console-log .log-entry.error { color: #ff5e5e; background: rgba(255,94,94,0.06); }
+  .preview-console-log .log-entry.input { color: #6bcf7f; }
+  .preview-console-log .log-entry .log-icon {
+    display: inline-block;
+    width: 14px;
+    margin-right: 4px;
+    opacity: 0.85;
+    font-weight: bold;
+  }
+
+  #preview-console-editor {
+    position: relative;
+    z-index: 100000;
+    height: 40px;
+    width: 100%;
+    flex-shrink: 0;
+    overflow: visible;
   }
   .preview-overlay .preview-container .preview-console-monaco .monaco-editor {
     z-index: 10000 !important;
@@ -705,12 +761,6 @@
   .preview-overlay .preview-container .preview-console-monaco .monaco-editor .monaco-scrollable-element {
     z-index: 10003 !important;
     position: relative !important;
-  }
-  #preview-console-editor {
-    position: relative;
-    z-index: 9998;
-    height: 100%;
-    width: 100%;
   }
   .preview-overlay .preview-container .preview-console-monaco .monaco-editor .scrollbar.horizontal {
     display: block !important;
@@ -767,6 +817,11 @@
   }
   .preview-overlay .preview-container .preview-console-monaco .monaco-editor .view-lines::-webkit-scrollbar-thumb:hover {
     background: #5a5a5a;
+  }
+  .preview-overlay .preview-container .preview-console-monaco .monaco-editor .suggest-widget,
+  .preview-overlay .preview-container .preview-console-monaco .monaco-editor .parameter-hints-widget,
+  .preview-overlay .preview-container .preview-console-monaco .monaco-editor .monaco-hover {
+    z-index: 100001 !important;
   }
 
   .preview-overlay .dropdown-container {
@@ -827,9 +882,6 @@
   }
   .run-button svg { width: 16px; height: 16px; }
 
-  /* ============================================= */
-  /* === NexusAI Popup Window === */
-  /* ============================================= */
   .nexus-window {
     position: fixed;
     background: #1c1c1c;
@@ -986,6 +1038,99 @@
     pointer-events: none;
     transition: opacity 0.18s, transform 0.18s;
   }
+
+  .import-github-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 5000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .import-github-modal.active { display: flex; }
+  .import-github-modal .modal-box {
+    background: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 18px 20px;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    color: var(--text-main);
+    font-size: 13px;
+  }
+  .import-github-modal .modal-box h3 {
+    margin: 0 0 12px 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #e6e6e6;
+  }
+  .import-github-modal .modal-box p {
+    margin: 0 0 12px 0;
+    color: var(--text-dim);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .import-github-modal .modal-box input {
+    width: 100%;
+    background: #141414;
+    border: 1px solid #333;
+    border-radius: 4px;
+    color: var(--text-main);
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: monospace;
+    outline: none;
+    user-select: text;
+    margin-bottom: 12px;
+  }
+  .import-github-modal .modal-box input:focus { border-color: #4fa8d8; }
+  .import-github-modal .modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+  .import-github-modal .modal-actions button {
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    outline: none !important;
+  }
+  .import-github-modal .modal-actions .btn-cancel {
+    background: transparent;
+    color: var(--text-dim);
+    border-color: #333;
+  }
+  .import-github-modal .modal-actions .btn-cancel:hover { color: var(--text-main); border-color: #555; }
+  .import-github-modal .modal-actions .btn-confirm {
+    background: #4fa8d8;
+    color: #0b0b0b;
+    font-weight: 600;
+  }
+  .import-github-modal .modal-actions .btn-confirm:hover { background: #6bbce6; }
+  .import-github-modal .modal-actions .btn-confirm:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .import-github-modal .modal-error {
+    color: #ff5e5e;
+    font-size: 12px;
+    margin-top: -6px;
+    margin-bottom: 10px;
+    min-height: 14px;
+  }
+  .import-github-modal .modal-progress {
+    color: #4fa8d8;
+    font-size: 12px;
+    margin-top: -6px;
+    margin-bottom: 10px;
+    min-height: 14px;
+  }
 </style>
 </head>
 <body>
@@ -1000,7 +1145,6 @@
           <path d="M14 2V8H20" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>
         </svg>
       </div>
-      <!-- === Botão NexusAI (substituindo o search) === -->
       <div class="activity-icon inactive" id="activity-nexusai" tabindex="-1" title="NexusAI">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2L2 7l10 5 10-5-10-5z"/>
@@ -1014,7 +1158,7 @@
       <div class="sidebar-header">
         <span class="sidebar-title">Explorer</span>
         <div class="sidebar-actions">
-          <svg viewBox="0 0 24 24" fill="none" title="Collapse All" id="btn-collapse" tabindex="-1"><path d="M4 7h16M4 17h16M9 11l3-3 3 3M9 13l3 3 3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" title="Import from GitHub" id="btn-import-github" tabindex="-1"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           <svg viewBox="0 0 24 24" fill="none" title="New File" id="btn-new-file" tabindex="-1"><path d="M13 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8l-6-5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M13 3v5h6" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><line x1="12" y1="12.5" x2="12" y2="17.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="9.5" y1="15" x2="14.5" y2="15" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
           <svg viewBox="0 0 24 24" fill="none" title="New Folder" id="btn-new-folder" tabindex="-1"><path d="M3 6.5a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-12Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><line x1="12" y1="11" x2="12" y2="16" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><line x1="9.5" y1="13.5" x2="14.5" y2="13.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
           <svg viewBox="0 0 24 24" fill="none" title="Reset to default" id="btn-reset" tabindex="-1"><path d="M4 12a8 8 0 0 1 13.66-5.66L20 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M20 4v4h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12a8 8 0 0 1-13.66 5.66L4 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M4 20v-4h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1066,9 +1210,6 @@
   </div>
 </div>
 
-<!-- ============================================= -->
-<!-- === NexusAI Popup === -->
-<!-- ============================================= -->
 <div class="nexus-window" id="nexusWindow">
     <div class="nexus-title-bar" id="nexusTitleBar">
         <div class="nexus-title-text">
@@ -1080,10 +1221,10 @@
             NexusAI
         </div>
         <div class="nexus-window-controls">
-            <button class="nexus-btn-minimize" id="nexusMinimizeBtn" title="Minimizar">
+            <button class="nexus-btn-minimize" id="nexusMinimizeBtn" title="Minimize">
                 <svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg>
             </button>
-            <button class="nexus-btn-close" id="nexusCloseBtn" title="Fechar">
+            <button class="nexus-btn-close" id="nexusCloseBtn" title="Close">
                 <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
             </button>
         </div>
@@ -1141,7 +1282,22 @@
   <div class="preview-container" id="previewContainer">
     <iframe id="previewFrame"></iframe>
     <div class="preview-console-monaco" id="previewConsoleMonaco">
+      <div class="preview-console-log" id="previewConsoleLog"></div>
       <div id="preview-console-editor"></div>
+    </div>
+  </div>
+</div>
+
+<div class="import-github-modal" id="importGithubModal">
+  <div class="modal-box">
+    <h3>Import from GitHub</h3>
+    <p>Paste the repository URL (e.g. <code>https://github.com/user/repo</code>). The project will replace the current file tree.</p>
+    <input type="text" id="importGithubUrl" placeholder="https://github.com/user/repo" autocomplete="off" spellcheck="false" />
+    <div class="modal-error" id="importGithubError"></div>
+    <div class="modal-progress" id="importGithubProgress"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="importGithubCancel">Cancel</button>
+      <button class="btn-confirm" id="importGithubConfirm">Import</button>
     </div>
   </div>
 </div>
@@ -1170,7 +1326,7 @@
         type: 'folder', name: 'Layout', open: true, children: [
           { type: 'file', name: 'game.js', size: '2.3 KB', path: 'Layout/game.js', modified: false },
           { type: 'file', name: 'input.js', size: '1.8 KB', path: 'Layout/input.js', modified: false },
-          { type: 'file', name: 'Index.html', size: '3.4 KB', path: 'Layout/Index.html', modified: false },
+          { type: 'file', name: 'index.html', size: '3.4 KB', path: 'Layout/index.html', modified: false },
           { type: 'file', name: 'render.js', size: '4.1 KB', path: 'Layout/render.js', modified: false },
           { type: 'file', name: 'style.css', size: '2.7 KB', path: 'Layout/style.css', modified: false }
         ]
@@ -1180,7 +1336,7 @@
     const DEFAULT_FILES = {
       "Layout/game.js": `// Game logic\nclass Game {\n  constructor() {\n    this.score = 0;\n    this.level = 1;\n    this.isRunning = false;\n  }\n  \n  start() {\n    this.isRunning = true;\n    console.log('Game started');\n  }\n  \n  update(deltaTime) {\n    if (!this.isRunning) return;\n  }\n  \n  render() {\n    // Render game\n  }\n}`,
       "Layout/input.js": `// Input handling\nclass InputManager {\n  constructor() {\n    this.keys = {};\n    this.mouse = { x: 0, y: 0 };\n    this.setupListeners();\n  }\n  \n  setupListeners() {\n    document.addEventListener('keydown', (e) => {\n      this.keys[e.key] = true;\n    });\n    \n    document.addEventListener('keyup', (e) => {\n      this.keys[e.key] = false;\n    });\n    \n    document.addEventListener('mousemove', (e) => {\n      this.mouse.x = e.clientX;\n      this.mouse.y = e.clientY;\n    });\n  }\n  \n  isKeyPressed(key) {\n    return this.keys[key] === true;\n  }\n}`,
-      "Layout/Index.html": `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>My Game</title>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n  <div id="app">\n    <canvas id="gameCanvas"></canvas>\n    <div id="ui">\n      <div id="score">Score: 0</div>\n      <div id="level">Level: 1</div>\n    </div>\n  </div>\n  <script src="input.js"><\/script>\n  <script src="render.js"><\/script>\n  <script src="game.js"><\/script>\n  <script>\n    const game = new Game();\n    game.start();\n  <\/script>\n</body>\n</html>`,
+      "Layout/index.html": `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>My Game</title>\n  <link rel="stylesheet" href="style.css">\n</head>\n<body>\n  <div id="app">\n    <canvas id="gameCanvas"></canvas>\n    <div id="ui">\n      <div id="score">Score: 0</div>\n      <div id="level">Level: 1</div>\n    </div>\n  </div>\n  <script src="input.js"><\/script>\n  <script src="render.js"><\/script>\n  <script src="game.js"><\/script>\n  <script>\n    const game = new Game();\n    game.start();\n  <\/script>\n</body>\n</html>`,
       "Layout/render.js": `// Rendering engine\nclass Renderer {\n  constructor(canvasId) {\n    this.canvas = document.getElementById(canvasId);\n    this.ctx = this.canvas.getContext('2d');\n    this.resize();\n    window.addEventListener('resize', () => this.resize());\n  }\n  \n  resize() {\n    this.canvas.width = window.innerWidth;\n    this.canvas.height = window.innerHeight - 100;\n  }\n  \n  clear() {\n    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);\n  }\n  \n  drawRect(x, y, width, height, color) {\n    this.ctx.fillStyle = color;\n    this.ctx.fillRect(x, y, width, height);\n  }\n  \n  drawCircle(x, y, radius, color) {\n    this.ctx.beginPath();\n    this.ctx.arc(x, y, radius, 0, Math.PI * 2);\n    this.ctx.fillStyle = color;\n    this.ctx.fill();\n  }\n}`,
       "Layout/style.css": `* {\n  margin: 0;\n  padding: 0;\n  box-sizing: border-box;\n}\n\nbody {\n  background: #1a1a2e;\n  color: #fff;\n  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n  overflow: hidden;\n}\n\n#app {\n  display: flex;\n  flex-direction: column;\n  height: 100vh;\n}\n\n#gameCanvas {\n  flex: 1;\n  background: #16213e;\n  border-bottom: 2px solid #0f3460;\n}\n\n#ui {\n  display: flex;\n  justify-content: center;\n  gap: 40px;\n  padding: 15px;\n  background: #0f3460;\n  font-size: 18px;\n  font-weight: bold;\n}\n\n#score, #level {\n  padding: 5px 20px;\n  background: rgba(255,255,255,0.1);\n  border-radius: 20px;\n}`
     };
@@ -1202,6 +1358,12 @@
     let previewConsoleEditor = null;
     let previewConsoleOpen = false;
 
+    let pendingConsoleLogs = [];
+    let previewPollingInterval = null;
+
+    let blobRevokeTimers = [];
+    let appIsVisible = true;
+
     let dragGhost = null;
     let dragSourceRow = null;
     let dragSourceNode = null;
@@ -1211,6 +1373,14 @@
 
     const MOBILE_BREAKPOINT = 860;
     function isMobileLayout() { return window.innerWidth <= MOBILE_BREAKPOINT; }
+
+    function scheduleBlobRevoke(url) {
+      const timer = setTimeout(() => {
+        try { URL.revokeObjectURL(url); } catch(e) {}
+        blobRevokeTimers = blobRevokeTimers.filter(t => t !== timer);
+      }, 5 * 60 * 1000);
+      blobRevokeTimers.push(timer);
+    }
 
     function applyLayoutMode() {
       const appEl = document.querySelector('.app');
@@ -1248,6 +1418,22 @@
           const state = JSON.parse(saved);
           tree = state.tree || deepCopy(DEFAULT_TREE);
           fileContents = state.files || deepCopy(DEFAULT_FILES);
+          let migrated = false;
+          if (fileContents['Layout/Index.html'] !== undefined) {
+            fileContents['Layout/index.html'] = fileContents['Layout/Index.html'];
+            delete fileContents['Layout/Index.html'];
+            migrated = true;
+          }
+          if (tree[0] && tree[0].children) {
+            tree[0].children.forEach(child => {
+              if (child.name === 'Index.html') {
+                child.name = 'index.html';
+                child.path = 'Layout/index.html';
+                migrated = true;
+              }
+            });
+          }
+          if (migrated) saveState();
           return true;
         }
       } catch(e) {}
@@ -1284,7 +1470,7 @@
       saveState();
       buildTree();
       renderTabs();
-      const initialFile = findNode(tree, 'Layout/game.js');
+      const initialFile = findNode(tree, 'Layout/index.html');
       if (initialFile) openFile(initialFile);
     }
 
@@ -2166,9 +2352,33 @@
       });
     }
 
+    function getActiveHtmlFile() {
+      const activeTab = openTabs.find(t => t.id === activeTabId);
+      if (activeTab && activeTab.path.toLowerCase().endsWith('.html')) {
+        return activeTab.path;
+      }
+      for (let i = openTabs.length - 1; i >= 0; i--) {
+        if (openTabs[i].path.toLowerCase().endsWith('.html')) {
+          return openTabs[i].path;
+        }
+      }
+      const allFiles = [];
+      function collectFiles(node) {
+        if (node.type === 'file') allFiles.push(node.path);
+        if (node.children) node.children.forEach(collectFiles);
+      }
+      tree.forEach(collectFiles);
+      const htmlFile = allFiles.find(p => p.toLowerCase().endsWith('.html'));
+      return htmlFile || 'Layout/index.html';
+    }
+
     function generateHTML() {
-      const htmlFile = fileContents['Layout/Index.html'] || '';
-      const cssFile = fileContents['Layout/style.css'] || '';
+      const activeHtmlPath = getActiveHtmlFile();
+      const htmlFile = fileContents[activeHtmlPath] || '';
+      
+      const baseDir = activeHtmlPath.substring(0, activeHtmlPath.lastIndexOf('/') + 1);
+      
+      const cssFile = fileContents[baseDir + 'style.css'] || fileContents['Layout/style.css'] || '';
       const jsFiles = ['input.js', 'render.js', 'game.js'];
       
       let html = htmlFile;
@@ -2179,13 +2389,72 @@
       );
       
       jsFiles.forEach(jsFile => {
-        const content = fileContents[`Layout/${jsFile}`] || '';
+        const content = fileContents[baseDir + jsFile] || fileContents['Layout/' + jsFile] || '';
         const scriptTag = new RegExp(`<script[^>]*src="${jsFile}"[^>]*><\/script>`, 'g');
         const inlineScript = `<script>${content}<\/script>`;
         html = html.replace(scriptTag, inlineScript);
       });
       
       return html;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function injectConsoleCapture(htmlContent) {
+      const captureScript = `<script>
+(function(){
+  window.__previewConsoleLogs = window.__previewConsoleLogs || [];
+
+  function serialize(a) {
+    if (a === null) return 'null';
+    if (a === undefined) return 'undefined';
+    if (typeof a === 'string') return a;
+    if (typeof a === 'number' || typeof a === 'boolean') return String(a);
+    if (typeof a === 'function') return a.toString();
+    if (a instanceof Error) return (a.name || 'Error') + ': ' + (a.message || '');
+    if (typeof a === 'object') {
+      try { return JSON.stringify(a); } catch(e){ return String(a); }
+    }
+    return String(a);
+  }
+
+  function record(type, args) {
+    var parts = [];
+    for (var i = 0; i < args.length; i++) parts.push(serialize(args[i]));
+    window.__previewConsoleLogs.push({ type: type, text: parts.join(' ') });
+  }
+
+  var origLog = console.log, origErr = console.error, origWarn = console.warn, origInfo = console.info;
+  console.log = function(){ record('log', arguments); try { origLog.apply(console, arguments); } catch(e){} };
+  console.error = function(){ record('error', arguments); try { origErr.apply(console, arguments); } catch(e){} };
+  console.warn = function(){ record('warn', arguments); try { origWarn.apply(console, arguments); } catch(e){} };
+  console.info = function(){ record('info', arguments); try { origInfo.apply(console, arguments); } catch(e){} };
+
+  window.addEventListener('error', function(e){
+    record('error', [e.message + ' (line ' + e.lineno + ':' + e.colno + ')']);
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    var msg = 'Unhandled Promise Rejection: ';
+    if (e.reason && e.reason.message) msg += e.reason.message;
+    else msg += String(e.reason);
+    record('error', [msg]);
+  });
+})();
+<\/script>`;
+
+      if (/<head[^>]*>/i.test(htmlContent)) {
+        htmlContent = htmlContent.replace(/<head[^>]*>/i, (m) => m + captureScript);
+      } else {
+        htmlContent = captureScript + htmlContent;
+      }
+      return htmlContent;
     }
 
     function showPreview() {
@@ -2195,46 +2464,113 @@
       const iframe = document.getElementById('previewFrame');
       const urlDisplay = document.getElementById('urlDisplay');
       
-      const htmlContent = generateHTML();
+      resetPreviewConsole();
+      
+      let htmlContent = generateHTML();
+      htmlContent = injectConsoleCapture(htmlContent);
+      
       const blob = new Blob([htmlContent], { type: 'text/html; charset=utf-8' });
       
       if (currentBlobUrl) {
-        URL.revokeObjectURL(currentBlobUrl);
+        scheduleBlobRevoke(currentBlobUrl);
       }
       currentBlobUrl = URL.createObjectURL(blob);
       
       urlDisplay.textContent = currentBlobUrl;
-      iframe.src = currentBlobUrl;
       
+      if (previewPollingInterval) clearInterval(previewPollingInterval);
+      let lastLogCount = 0;
+      previewPollingInterval = setInterval(() => {
+        try {
+          const win = iframe.contentWindow;
+          if (!win || !win.__previewConsoleLogs) return;
+          const logs = win.__previewConsoleLogs;
+          if (logs.length > lastLogCount) {
+            for (let i = lastLogCount; i < logs.length; i++) {
+              appendLogToPanel(logs[i].type, logs[i].text);
+            }
+            lastLogCount = logs.length;
+          }
+        } catch(e) {}
+      }, 80);
+      
+      iframe.src = currentBlobUrl;
       overlay.classList.add('active');
     }
 
     function hidePreview() {
       const overlay = document.getElementById('previewOverlay');
-      const iframe = document.getElementById('previewFrame');
-      iframe.src = '';
       overlay.classList.remove('active');
+      
       if (currentBlobUrl) {
-        URL.revokeObjectURL(currentBlobUrl);
-        currentBlobUrl = null;
+        scheduleBlobRevoke(currentBlobUrl);
       }
+      
       if (previewConsoleOpen) {
         togglePreviewConsole();
+      }
+      if (previewPollingInterval) {
+        clearInterval(previewPollingInterval);
+        previewPollingInterval = null;
       }
     }
 
     function reloadPreview() {
       const iframe = document.getElementById('previewFrame');
+      resetPreviewConsole();
       if (currentBlobUrl) {
+        if (previewPollingInterval) clearInterval(previewPollingInterval);
+        let lastLogCount = 0;
+        previewPollingInterval = setInterval(() => {
+          try {
+            const win = iframe.contentWindow;
+            if (!win || !win.__previewConsoleLogs) return;
+            const logs = win.__previewConsoleLogs;
+            if (logs.length > lastLogCount) {
+              for (let i = lastLogCount; i < logs.length; i++) {
+                appendLogToPanel(logs[i].type, logs[i].text);
+              }
+              lastLogCount = logs.length;
+            }
+          } catch(e) {}
+        }, 80);
         iframe.src = currentBlobUrl;
       } else {
         showPreview();
       }
     }
 
+    function resetPreviewConsole() {
+      const logPanel = document.getElementById('previewConsoleLog');
+      if (logPanel) {
+        logPanel.innerHTML = '';
+        logPanel.classList.remove('has-content');
+      }
+      pendingConsoleLogs = [];
+      updateConsoleHeight();
+    }
+
+    function updateConsoleHeight() {
+      const logPanel = document.getElementById('previewConsoleLog');
+      const consoleEl = document.getElementById('previewConsoleMonaco');
+      if (!logPanel || !consoleEl) return;
+
+      if (!logPanel.classList.contains('has-content') || logPanel.children.length === 0) {
+        consoleEl.style.height = '40px';
+        return;
+      }
+
+      const inputHeight = 40;
+      const naturalHeight = logPanel.scrollHeight + inputHeight;
+      const maxHeight = Math.floor(window.innerHeight * 0.6);
+      const newHeight = Math.min(Math.max(naturalHeight, 60), maxHeight);
+      consoleEl.style.height = newHeight + 'px';
+    }
+
     function setupPreviewConsoleMonaco() {
       const container = document.getElementById('preview-console-editor');
-      
+      const logPanel = document.getElementById('previewConsoleLog');
+
       monaco.editor.defineTheme('cmdbar-dark', {
         base: 'vs-dark',
         inherit: true,
@@ -2257,7 +2593,7 @@
         glyphMargin: false,
         folding: false,
         minimap: { enabled: false },
-        scrollbar: { 
+        scrollbar: {
           vertical: 'hidden',
           horizontal: 'visible',
           useShadows: false,
@@ -2271,49 +2607,13 @@
         scrollBeyondLastLine: false,
         scrollBeyondLastColumn: 0,
         smoothScrolling: true,
-        quickSuggestions: {
-          other: true,
-          comments: true,
-          strings: true
-        },
-        suggest: {
-          showKeywords: true,
-          showSnippets: true,
-          showFunctions: true,
-          showConstructors: true,
-          showDeprecated: true,
-          showFields: true,
-          showVariables: true,
-          showClasses: true,
-          showStructs: true,
-          showInterfaces: true,
-          showModules: true,
-          showProperties: true,
-          showEvents: true,
-          showOperators: true,
-          showUnits: true,
-          showValues: true,
-          showConstants: true,
-          showEnums: true,
-          showEnumMembers: true,
-          showText: true,
-          showColors: true,
-          showFiles: true,
-          showReferences: true,
-          showFolders: true,
-          showTypeParameters: true,
-          showSnippets: true
-        },
+        quickSuggestions: { other: true, comments: true, strings: true },
         snippetSuggestions: 'top'
       });
 
       function addPlaceholder() {
         const viewLine = document.querySelector('.preview-console-monaco .monaco-editor .view-line');
-        if (!viewLine) {
-          setTimeout(addPlaceholder, 100);
-          return;
-        }
-        
+        if (!viewLine) { setTimeout(addPlaceholder, 100); return; }
         let placeholder = viewLine.querySelector('.placeholder-line');
         if (!placeholder) {
           placeholder = document.createElement('span');
@@ -2321,30 +2621,21 @@
           placeholder.textContent = 'Type a command...';
           viewLine.appendChild(placeholder);
         }
-        
         updatePlaceholder();
       }
-
       function updatePlaceholder() {
         const value = previewConsoleEditor.getValue();
         const viewLine = document.querySelector('.preview-console-monaco .monaco-editor .view-line');
         if (!viewLine) return;
         let placeholder = viewLine.querySelector('.placeholder-line');
-        if (!placeholder) {
-          addPlaceholder();
-          return;
-        }
-        if (value === '' || value.trim() === '') {
-          placeholder.classList.add('visible');
-        } else {
-          placeholder.classList.remove('visible');
-        }
+        if (!placeholder) { addPlaceholder(); return; }
+        if (value === '' || value.trim() === '') placeholder.classList.add('visible');
+        else placeholder.classList.remove('visible');
       }
 
       previewConsoleEditor.onDidChangeModelContent(() => {
         const currentValue = previewConsoleEditor.getValue();
         const newValue = currentValue.replace(/[\r\n]+/g, ' ');
-        
         if (currentValue !== newValue) {
           const position = previewConsoleEditor.getPosition();
           previewConsoleEditor.setValue(newValue);
@@ -2355,58 +2646,47 @@
         }
         updatePlaceholder();
       });
-
       previewConsoleEditor.onDidChangeCursorPosition((e) => {
         if (e.position.lineNumber > 1) {
-          previewConsoleEditor.setPosition({
-            lineNumber: 1,
-            column: e.position.column
-          });
+          previewConsoleEditor.setPosition({ lineNumber: 1, column: e.position.column });
         }
       });
 
-      previewConsoleEditor.addCommand(monaco.KeyCode.Enter, () => {
-        const cmd = previewConsoleEditor.getValue();
-        if (cmd.trim()) {
-          executeInPreview(cmd);
-          previewConsoleEditor.setValue('');
-          updatePlaceholder();
-        }
-      });
+      previewConsoleEditor.onKeyDown((e) => {
+  if (e.keyCode === monaco.KeyCode.Enter && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
+    const cmd = previewConsoleEditor.getValue();
+    if (cmd.trim()) {
+      e.preventDefault();
+      e.stopPropagation();
+      appendLog('input', cmd.trim());
+      executeInPreview(cmd);
+      previewConsoleEditor.setValue('');
+      updatePlaceholder();
+    }
+  }
+});
 
       setTimeout(() => {
         const observer = new MutationObserver(() => {
           const viewLine = document.querySelector('.preview-console-monaco .monaco-editor .view-line');
-          if (viewLine && !viewLine.querySelector('.placeholder-line')) {
-            addPlaceholder();
-          }
+          if (viewLine && !viewLine.querySelector('.placeholder-line')) addPlaceholder();
         });
-        
         setTimeout(() => {
           const viewLines = document.querySelector('.preview-console-monaco .monaco-editor .view-lines');
-          if (viewLines) {
-            observer.observe(viewLines, { childList: true, subtree: true });
-          }
+          if (viewLines) observer.observe(viewLines, { childList: true, subtree: true });
           addPlaceholder();
         }, 100);
       }, 200);
 
-      let isDraggingScroll = false;
-      let startX = 0;
-      let scrollLeft = 0;
-
+      let isDraggingScroll = false, startX = 0, scrollLeft = 0;
       container.addEventListener('mousedown', (e) => {
         if (e.target.closest('.view-line')) return;
         isDraggingScroll = true;
         startX = e.pageX;
         const viewLines = document.querySelector('.preview-console-monaco .monaco-editor .view-lines');
-        if (viewLines) {
-          scrollLeft = viewLines.scrollLeft;
-          viewLines.style.cursor = 'grabbing';
-        }
+        if (viewLines) { scrollLeft = viewLines.scrollLeft; viewLines.style.cursor = 'grabbing'; }
         e.preventDefault();
       });
-
       document.addEventListener('mousemove', (e) => {
         if (!isDraggingScroll) return;
         const viewLines = document.querySelector('.preview-console-monaco .monaco-editor .view-lines');
@@ -2415,7 +2695,6 @@
           viewLines.scrollLeft = scrollLeft - deltaX;
         }
       });
-
       document.addEventListener('mouseup', () => {
         if (isDraggingScroll) {
           isDraggingScroll = false;
@@ -2423,14 +2702,37 @@
           if (viewLines) viewLines.style.cursor = 'text';
         }
       });
-
       container.addEventListener('wheel', (e) => {
         const viewLines = document.querySelector('.preview-console-monaco .monaco-editor .view-lines');
-        if (viewLines) {
-          viewLines.scrollLeft += e.deltaY;
-          e.preventDefault();
-        }
+        if (viewLines) { viewLines.scrollLeft += e.deltaY; e.preventDefault(); }
       }, { passive: false });
+
+      function appendLog(type, text) {
+        if (!logPanel) return;
+
+        logPanel.classList.add('has-content');
+
+        const entry = document.createElement('div');
+        entry.className = 'log-entry ' + type;
+        let icon = '';
+        if (type === 'error') icon = '✖';
+        else if (type === 'warn') icon = '⚠';
+        else if (type === 'info') icon = 'ℹ';
+        else if (type === 'input') icon = '›';
+        else icon = '›';
+        entry.innerHTML = `<span class="log-icon">${icon}</span>${escapeHtml(text)}`;
+        logPanel.appendChild(entry);
+        
+        logPanel.scrollTop = logPanel.scrollHeight;
+        updateConsoleHeight();
+      }
+
+      window.__previewAppendLog = appendLog;
+
+      if (pendingConsoleLogs.length > 0) {
+        pendingConsoleLogs.forEach(item => appendLog(item.type, item.text));
+        pendingConsoleLogs = [];
+      }
     }
 
     function togglePreviewConsole() {
@@ -2438,7 +2740,10 @@
       const el = document.getElementById('previewConsoleMonaco');
       el.classList.toggle('active', previewConsoleOpen);
       if (previewConsoleOpen && previewConsoleEditor) {
-        setTimeout(() => previewConsoleEditor.focus(), 100);
+        setTimeout(() => {
+          previewConsoleEditor.focus();
+          updateConsoleHeight();
+        }, 100);
       }
     }
 
@@ -2451,7 +2756,17 @@
         if (iframe && iframe.contentWindow) {
           iframe.contentWindow.eval(cmd);
         }
-      } catch(e) {}
+      } catch(e) {
+        appendLogToPanel('error', e.message || String(e));
+      }
+    }
+
+    function appendLogToPanel(type, text) {
+      if (typeof window.__previewAppendLog === 'function') {
+        window.__previewAppendLog(type, text);
+      } else {
+        pendingConsoleLogs.push({ type, text });
+      }
     }
 
     function accIconSVG(name) {
@@ -2530,9 +2845,6 @@
       });
     }
 
-    /* ============================================= */
-    /* === NexusAI Popup Controls (Otimizado) === */
-    /* ============================================= */
     function setupNexusAI() {
       const nexusWindow = document.getElementById('nexusWindow');
       const nexusTitleBar = document.getElementById('nexusTitleBar');
@@ -2564,7 +2876,6 @@
       }
 
       function openNexus() {
-        // Carrega o iframe apenas na primeira abertura (lazy loading)
         if (!iframeLoaded) {
           nexusFrame.src = nexusFrame.dataset.src;
           iframeLoaded = true;
@@ -2575,7 +2886,6 @@
         nexusWindow.classList.remove('minimized');
         nexusIsMinimized = false;
 
-        // Centralizar via transform
         nexusWindow.style.transform = 'translate(-50%, -50%)';
         nexusWindow.style.left = '50%';
         nexusWindow.style.top = '50%';
@@ -2607,7 +2917,6 @@
         }
       }
 
-      // Botão da activity bar
       nexusActivityBtn.addEventListener('click', () => {
         if (nexusWindow.classList.contains('active')) {
           closeNexus();
@@ -2616,7 +2925,6 @@
         }
       });
 
-      // Minimizar
       nexusMinimizeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         toggleNexusMinimize();
@@ -2626,7 +2934,6 @@
         toggleNexusMinimize();
       });
 
-      // Fechar
       nexusCloseBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         closeNexus();
@@ -2635,10 +2942,6 @@
         e.stopPropagation();
         closeNexus();
       });
-
-      // ============== DRAG OTIMIZADO ==============
-      // Durante o drag, o iframe é desabilitado com pointer-events:none
-      // e as posições são aplicadas via requestAnimationFrame
 
       function nexusApplyDragPosition() {
         rafId = null;
@@ -2655,10 +2958,8 @@
         nexusIsDragging = true;
         nexusWindow.style.cursor = 'grabbing';
         document.body.style.userSelect = 'none';
-        // Remove o transform para poder mover por left/top
         nexusWindow.style.transform = 'none';
         nexusWindow.style.position = 'fixed';
-        // Adiciona classe que desabilita o iframe (pointer-events: none)
         nexusWindow.classList.add('dragging');
         e.preventDefault();
       }
@@ -2691,9 +2992,7 @@
           nexusIsDragging = false;
           nexusWindow.style.cursor = '';
           document.body.style.userSelect = '';
-          // Reativa o iframe
           nexusWindow.classList.remove('dragging');
-          // Aplica posição final
           if (rafId) {
             cancelAnimationFrame(rafId);
             rafId = null;
@@ -2710,8 +3009,6 @@
       nexusTitleBar.addEventListener('touchstart', nexusStartDrag, { passive: false });
       document.addEventListener('touchmove', nexusMoveDrag, { passive: false });
       document.addEventListener('touchend', nexusEndDrag);
-
-      // ============== RESIZE OTIMIZADO ==============
 
       function nexusApplyResize() {
         resizeRafId = null;
@@ -2808,10 +3105,217 @@
       document.addEventListener('touchmove', nexusMoveResize, { passive: false });
       document.addEventListener('touchend', nexusEndResize);
 
-      // Duplo clique para minimizar
       nexusTitleBar.addEventListener('dblclick', (e) => {
         e.preventDefault();
         toggleNexusMinimize();
+      });
+    }
+
+    function setupGitHubImport() {
+      const modal = document.getElementById('importGithubModal');
+      const input = document.getElementById('importGithubUrl');
+      const errorEl = document.getElementById('importGithubError');
+      const progressEl = document.getElementById('importGithubProgress');
+      const cancelBtn = document.getElementById('importGithubCancel');
+      const confirmBtn = document.getElementById('importGithubConfirm');
+      const triggerBtn = document.getElementById('btn-import-github');
+
+      function openModal() {
+        modal.classList.add('active');
+        errorEl.textContent = '';
+        progressEl.textContent = '';
+        input.value = '';
+        confirmBtn.disabled = false;
+        setTimeout(() => input.focus(), 50);
+      }
+
+      function closeModal() {
+        modal.classList.remove('active');
+        errorEl.textContent = '';
+        progressEl.textContent = '';
+      }
+
+      triggerBtn.addEventListener('click', openModal);
+      cancelBtn.addEventListener('click', closeModal);
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !confirmBtn.disabled) {
+          confirmBtn.click();
+        } else if (e.key === 'Escape') {
+          closeModal();
+        }
+      });
+
+      function parseGitHubUrl(url) {
+        const trimmed = (url || '').trim();
+        const m = trimmed.match(/^https?:\/\/github\.com\/([^\/\s]+)\/([^\/\s]+?)(?:\.git)?(?:\/(?:tree|blob)\/([^\s\/]+))?\/?$/i);
+        if (!m) return null;
+        return { owner: m[1], repo: m[2], ref: m[3] || null };
+      }
+
+      function updateProgress(msg) {
+        progressEl.textContent = msg;
+      }
+
+      async function importRepo(owner, repo, ref) {
+        updateProgress('Fetching repository information...');
+        const repoInfoResp = await fetch(`https://api.github.com/repos/${owner}/${repo}`);
+        if (!repoInfoResp.ok) {
+          throw new Error('Repository not found or private (HTTP ' + repoInfoResp.status + ').');
+        }
+        const repoInfo = await repoInfoResp.json();
+        const defaultBranch = ref || repoInfo.default_branch || 'main';
+
+        updateProgress('Downloading file tree...');
+        const treeResp = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/${defaultBranch}?recursive=1`);
+        if (!treeResp.ok) {
+          throw new Error('Could not fetch the repository tree (HTTP ' + treeResp.status + ').');
+        }
+        const treeData = await treeResp.json();
+        if (!treeData.tree || !Array.isArray(treeData.tree)) {
+          throw new Error('Invalid response from the GitHub API.');
+        }
+
+        const blobs = treeData.tree.filter(item => item.type === 'blob');
+        if (blobs.length === 0) {
+          throw new Error('The repository contains no files.');
+        }
+
+        const MAX_FILES = 200;
+        const filesToFetch = blobs.slice(0, MAX_FILES);
+        const truncated = blobs.length > MAX_FILES;
+
+        const rootName = repo;
+        const newRoot = {
+          type: 'folder',
+          name: rootName,
+          path: rootName,
+          open: true,
+          children: []
+        };
+
+        const newFileContents = {};
+        let fetched = 0;
+
+        for (const item of filesToFetch) {
+          const parts = item.path.split('/');
+          let current = newRoot;
+          let currentPath = rootName;
+
+          for (let i = 0; i < parts.length - 1; i++) {
+            const seg = parts[i];
+            currentPath += '/' + seg;
+            let folder = current.children.find(c => c.type === 'folder' && c.name === seg);
+            if (!folder) {
+              folder = {
+                type: 'folder',
+                name: seg,
+                path: currentPath,
+                open: false,
+                children: []
+              };
+              current.children.push(folder);
+            }
+            current = folder;
+          }
+
+          const fileName = parts[parts.length - 1];
+          const filePath = currentPath + '/' + fileName;
+          const fileNode = {
+            type: 'file',
+            name: fileName,
+            size: (item.size ? (item.size + ' B') : ''),
+            path: filePath,
+            modified: false
+          };
+          current.children.push(fileNode);
+
+          try {
+            const contentResp = await fetch(item.url);
+            if (contentResp.ok) {
+              const contentJson = await contentResp.json();
+              if (contentJson && contentJson.content) {
+                let raw = contentJson.content.replace(/\n/g, '');
+                let decoded;
+                try {
+                  decoded = decodeURIComponent(escape(atob(raw)));
+                } catch(e) {
+                  decoded = atob(raw);
+                }
+                newFileContents[filePath] = decoded;
+              }
+            }
+          } catch(e) {
+            newFileContents[filePath] = '';
+          }
+
+          fetched++;
+          updateProgress('Downloading files... ' + fetched + '/' + filesToFetch.length);
+        }
+
+        return { newRoot, newFileContents, truncated, totalFiles: blobs.length };
+      }
+
+      confirmBtn.addEventListener('click', async () => {
+        errorEl.textContent = '';
+        progressEl.textContent = '';
+
+        const parsed = parseGitHubUrl(input.value);
+        if (!parsed) {
+          errorEl.textContent = 'Invalid URL. Use the format https://github.com/user/repo';
+          return;
+        }
+
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Importing...';
+
+        try {
+          const { newRoot, newFileContents, truncated, totalFiles } = await importRepo(parsed.owner, parsed.repo, parsed.ref);
+
+          tree = [newRoot];
+
+          openTabs.forEach(tab => {
+            if (editorModels.has(tab.path)) {
+              const model = editorModels.get(tab.path);
+              model.dispose();
+              editorModels.delete(tab.path);
+            }
+          });
+          openTabs = [];
+          activeTabId = null;
+          tabIdCounter = 0;
+          selectedNodes = [];
+
+          fileContents = {};
+          Object.keys(newFileContents).forEach(p => {
+            fileContents[p] = newFileContents[p];
+          });
+
+          renderTabs();
+          if (editor) {
+            const emptyModel = monaco.editor.createModel('', 'plaintext');
+            editor.setModel(emptyModel);
+          }
+
+          buildTree();
+          saveState();
+
+          if (truncated) {
+            updateProgress('Imported ' + Object.keys(newFileContents).length + ' of ' + totalFiles + ' files (limit of 200 reached).');
+            setTimeout(() => closeModal(), 2200);
+          } else {
+            updateProgress('Import complete: ' + Object.keys(newFileContents).length + ' files.');
+            setTimeout(() => closeModal(), 1200);
+          }
+        } catch (err) {
+          errorEl.textContent = err.message || 'Failed to import from GitHub.';
+          progressEl.textContent = '';
+        } finally {
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = 'Import';
+        }
       });
     }
 
@@ -2823,7 +3327,14 @@
       }
 
       applyLayoutMode();
-      window.addEventListener('resize', applyLayoutMode);
+      window.addEventListener('resize', () => {
+        applyLayoutMode();
+        updateConsoleHeight();
+      });
+
+      document.addEventListener('visibilitychange', () => {
+        appIsVisible = !document.hidden;
+      });
 
       if (!isMobileLayout()) {
         openSidebar();
@@ -2833,18 +3344,6 @@
       document.getElementById('sidebar-backdrop').addEventListener('click', closeSidebar);
 
       buildTree();
-
-      document.getElementById('btn-collapse').addEventListener('click', () => {
-        const allFolders = [];
-        function collect(node) {
-          if (node.type === 'folder') allFolders.push(node);
-          if (node.children) node.children.forEach(collect);
-        }
-        tree.forEach(collect);
-        allFolders.forEach(f => { f.open = false; });
-        buildTree();
-        saveState();
-      });
 
       document.getElementById('btn-new-file').addEventListener('click', () => {
         createNewFile(null);
@@ -2941,8 +3440,8 @@
         if (e.target.closest('img, a')) e.preventDefault();
       });
 
-      // Inicializa NexusAI
       setupNexusAI();
+      setupGitHubImport();
 
       require.config({ 
         paths: { 
@@ -2953,9 +3452,9 @@
       require(['vs/editor/editor.main'], function () {
         isMonacoReady = true;
         
-        const initialContent = fileContents["Layout/game.js"] || '';
-        const initialModel = monaco.editor.createModel(initialContent, 'javascript');
-        editorModels.set("Layout/game.js", initialModel);
+        const initialContent = fileContents["Layout/index.html"] || '';
+        const initialModel = monaco.editor.createModel(initialContent, 'html');
+        editorModels.set("Layout/index.html", initialModel);
         
         editor = monaco.editor.create(document.getElementById('monaco-container'), {
           model: initialModel,
@@ -3075,7 +3574,7 @@
         setupMobileAccessoryBar();
         setupPreviewConsoleMonaco();
 
-        const initialFile = findNode(tree, 'Layout/game.js');
+        const initialFile = findNode(tree, 'Layout/index.html');
         if (initialFile && openTabs.length === 0) {
           openFile(initialFile);
         }
