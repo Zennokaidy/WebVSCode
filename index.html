@@ -112,6 +112,20 @@
     stroke: #4060ff;
   }
 
+  #activity-guibuilder {
+    margin-top: 6px;
+  }
+  #activity-guibuilder svg {
+    stroke: #6b6b6b;
+    transition: stroke 0.2s;
+  }
+  #activity-guibuilder:hover svg {
+    stroke: #9a9a9a;
+  }
+  #activity-guibuilder.active svg {
+    stroke: #4060ff;
+  }
+
   .sidebar {
     width: var(--sidebar-width);
     background: var(--bg);
@@ -1152,6 +1166,15 @@
           <path d="M2 12l10 5 10-5"/>
         </svg>
       </div>
+      <!-- === Botão GUI Builder (novo) === -->
+      <div class="activity-icon inactive" id="activity-guibuilder" tabindex="-1" title="GUI Builder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <rect x="7" y="7" width="6" height="4" rx="1"/>
+          <line x1="7" y1="15" x2="17" y2="15"/>
+          <line x1="7" y1="18" x2="13" y2="18"/>
+        </svg>
+      </div>
     </div>
 
     <div class="sidebar" id="sidebar">
@@ -1321,6 +1344,8 @@
       'css': 'file-icon-blue'
     };
 
+    const GUI_BUILDER_URL = 'https://zennokaidy.github.io/GuiBuilder/';
+
     const DEFAULT_TREE = [
       {
         type: 'folder', name: 'Layout', open: true, children: [
@@ -1357,6 +1382,9 @@
     let shiftPressed = false;
     let previewConsoleEditor = null;
     let previewConsoleOpen = false;
+
+    let previewIsExternal = false;
+    let previewExternalUrl = null;
 
     let pendingConsoleLogs = [];
     let previewPollingInterval = null;
@@ -2466,6 +2494,9 @@
       
       resetPreviewConsole();
       
+      previewIsExternal = false;
+      previewExternalUrl = null;
+      
       let htmlContent = generateHTML();
       htmlContent = injectConsoleCapture(htmlContent);
       
@@ -2498,6 +2529,28 @@
       overlay.classList.add('active');
     }
 
+    // === NOVO: preview apontando para uma URL externa (ex: GUI Builder) ===
+    function showPreviewURL(url) {
+      const overlay = document.getElementById('previewOverlay');
+      const iframe = document.getElementById('previewFrame');
+      const urlDisplay = document.getElementById('urlDisplay');
+      
+      resetPreviewConsole();
+      
+      previewIsExternal = true;
+      previewExternalUrl = url;
+      
+      urlDisplay.textContent = url;
+      
+      if (previewPollingInterval) {
+        clearInterval(previewPollingInterval);
+        previewPollingInterval = null;
+      }
+      
+      iframe.src = url;
+      overlay.classList.add('active');
+    }
+
     function hidePreview() {
       const overlay = document.getElementById('previewOverlay');
       overlay.classList.remove('active');
@@ -2505,6 +2558,17 @@
       if (currentBlobUrl) {
         scheduleBlobRevoke(currentBlobUrl);
       }
+      
+      // Libera o iframe para não continuar rodando em background
+      const iframe = document.getElementById('previewFrame');
+      setTimeout(() => {
+        if (!overlay.classList.contains('active')) {
+          iframe.src = 'about:blank';
+        }
+      }, 200);
+      
+      previewIsExternal = false;
+      previewExternalUrl = null;
       
       if (previewConsoleOpen) {
         togglePreviewConsole();
@@ -2518,6 +2582,12 @@
     function reloadPreview() {
       const iframe = document.getElementById('previewFrame');
       resetPreviewConsole();
+      
+      if (previewIsExternal && previewExternalUrl) {
+        iframe.src = previewExternalUrl;
+        return;
+      }
+      
       if (currentBlobUrl) {
         if (previewPollingInterval) clearInterval(previewPollingInterval);
         let lastLogCount = 0;
@@ -2653,18 +2723,18 @@
       });
 
       previewConsoleEditor.onKeyDown((e) => {
-  if (e.keyCode === monaco.KeyCode.Enter && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
-    const cmd = previewConsoleEditor.getValue();
-    if (cmd.trim()) {
-      e.preventDefault();
-      e.stopPropagation();
-      appendLog('input', cmd.trim());
-      executeInPreview(cmd);
-      previewConsoleEditor.setValue('');
-      updatePlaceholder();
-    }
-  }
-});
+        if (e.keyCode === monaco.KeyCode.Enter && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
+          const cmd = previewConsoleEditor.getValue();
+          if (cmd.trim()) {
+            e.preventDefault();
+            e.stopPropagation();
+            appendLog('input', cmd.trim());
+            executeInPreview(cmd);
+            previewConsoleEditor.setValue('');
+            updatePlaceholder();
+          }
+        }
+      });
 
       setTimeout(() => {
         const observer = new MutationObserver(() => {
@@ -3111,6 +3181,37 @@
       });
     }
 
+    // === NOVO: botão GUI Builder ===
+    function setupGUIBuilder() {
+      const btn = document.getElementById('activity-guibuilder');
+      if (!btn) return;
+
+      btn.addEventListener('click', () => {
+        const overlay = document.getElementById('previewOverlay');
+        const urlDisplay = document.getElementById('urlDisplay');
+
+        // Se já estiver aberto com a URL do GUI Builder, fecha
+        if (overlay.classList.contains('active') && previewIsExternal && previewExternalUrl === GUI_BUILDER_URL) {
+          hidePreview();
+          btn.classList.remove('active');
+          return;
+        }
+
+        // Abre reaproveitando o showPreview URL (mesma barra, com URL/Reload/etc.)
+        showPreviewURL(GUI_BUILDER_URL);
+
+        btn.classList.add('active');
+        // Remove o destaque quando o preview fechar
+        const observer = new MutationObserver(() => {
+          if (!overlay.classList.contains('active')) {
+            btn.classList.remove('active');
+            observer.disconnect();
+          }
+        });
+        observer.observe(overlay, { attributes: true, attributeFilter: ['class'] });
+      });
+    }
+
     function setupGitHubImport() {
       const modal = document.getElementById('importGithubModal');
       const input = document.getElementById('importGithubUrl');
@@ -3381,7 +3482,9 @@
 
       document.getElementById('openBrowser').addEventListener('click', () => {
         dropdown.classList.remove('open');
-        if (currentBlobUrl) {
+        if (previewIsExternal && previewExternalUrl) {
+          window.open(previewExternalUrl, '_blank');
+        } else if (currentBlobUrl) {
           window.open(currentBlobUrl, '_blank');
         }
       });
@@ -3441,6 +3544,7 @@
       });
 
       setupNexusAI();
+      setupGUIBuilder();
       setupGitHubImport();
 
       require.config({ 
