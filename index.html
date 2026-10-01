@@ -240,25 +240,6 @@
     box-shadow: inset 0 0 0 2px #4fa8d8;
   }
 
-  .drag-ghost-clone {
-    position: fixed !important;
-    pointer-events: none !important;
-    z-index: 99999 !important;
-    opacity: 0.25 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    transform: none !important;
-    background: var(--bg) !important;
-    box-sizing: border-box !important;
-    will-change: left, top;
-    overflow: hidden !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-  }
-  .drag-ghost-clone .row-more-btn { display: none !important; }
-  .drag-ghost-clone .row-label { color: var(--text-main) !important; }
-  .drag-ghost-clone .row-meta { color: var(--text-faint) !important; }
-
   .tree-row .row-more-btn {
     display: flex;
     align-items: center;
@@ -1479,11 +1460,11 @@
     const DEFAULT_TREE = [
       {
         type: 'folder', name: 'Layout', open: true, children: [
-          { type: 'file', name: 'game.js', size: '2.3 KB', path: 'Layout/game.js', modified: false },
-          { type: 'file', name: 'input.js', size: '1.8 KB', path: 'Layout/input.js', modified: false },
-          { type: 'file', name: 'index.html', size: '3.4 KB', path: 'Layout/index.html', modified: false },
-          { type: 'file', name: 'render.js', size: '4.1 KB', path: 'Layout/render.js', modified: false },
-          { type: 'file', name: 'style.css', size: '2.7 KB', path: 'Layout/style.css', modified: false }
+          { type: 'file', name: 'game.js', path: 'Layout/game.js', modified: false },
+          { type: 'file', name: 'input.js', path: 'Layout/input.js', modified: false },
+          { type: 'file', name: 'index.html', path: 'Layout/index.html', modified: false },
+          { type: 'file', name: 'render.js', path: 'Layout/render.js', modified: false },
+          { type: 'file', name: 'style.css', path: 'Layout/style.css', modified: false }
         ]
       }
     ];
@@ -1541,6 +1522,47 @@
         try { URL.revokeObjectURL(url); } catch(e) {}
       });
       activePreviewBlobs = [];
+    }
+
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 B';
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    function computeFileSize(path) {
+      const content = fileContents[path];
+      if (content === undefined || content === null) return 0;
+      return new Blob([content]).size;
+    }
+
+    function recalcFileSizes() {
+      function walk(nodes) {
+        nodes.forEach(node => {
+          if (node.type === 'file' && node.path) {
+            const bytes = computeFileSize(node.path);
+            node.sizeBytes = bytes;
+            node.size = formatBytes(bytes);
+          }
+          if (node.children) walk(node.children);
+        });
+      }
+      walk(tree);
+    }
+
+    function updateRowSize(path) {
+      const row = document.querySelector(`.tree-row[data-path="${CSS.escape(path)}"]`);
+      if (!row) return;
+      const meta = row.querySelector('.row-meta');
+      if (!meta) return;
+      const bytes = computeFileSize(path);
+      meta.textContent = formatBytes(bytes);
+      const node = findNode(tree, path);
+      if (node) {
+        node.sizeBytes = bytes;
+        node.size = formatBytes(bytes);
+      }
     }
 
     function applyLayoutMode() {
@@ -1628,6 +1650,7 @@
         const emptyModel = monaco.editor.createModel('', 'plaintext');
         editor.setModel(emptyModel);
       }
+      recalcFileSizes();
       saveState();
       buildTree();
       renderTabs();
@@ -1708,16 +1731,31 @@
       }
 
       clone.removeAttribute('data-path');
-      clone.classList.remove('selected', 'drag-source', 'drag-target-hover');
-      clone.classList.add('drag-ghost-clone');
+      clone.classList.remove('selected', 'drag-source', 'drag-target-hover', 'drag-ghost-clone');
 
       const rect = row.getBoundingClientRect();
-      clone.style.width = rect.width + 'px';
-      clone.style.height = rect.height + 'px';
-      clone.style.minWidth = rect.width + 'px';
-      clone.style.maxWidth = rect.width + 'px';
-      clone.style.left = (x - rect.width / 2) + 'px';
-      clone.style.top = (y - rect.height / 2) + 'px';
+
+      clone.style.cssText = `
+        position: fixed;
+        pointer-events: none;
+        z-index: 99999;
+        opacity: 0.75;
+        margin: 0;
+        padding: 0;
+        background: var(--bg-select);
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        outline: none;
+        box-sizing: border-box;
+        overflow: hidden;
+        width: ${rect.width}px;
+        height: ${rect.height}px;
+        min-width: ${rect.width}px;
+        max-width: ${rect.width}px;
+        left: ${(x - rect.width / 2)}px;
+        top: ${(y - rect.height / 2)}px;
+      `;
 
       document.body.appendChild(clone);
       dragGhost = clone;
@@ -1907,9 +1945,13 @@
         label.textContent = node.name;
         row.appendChild(label);
 
+        const bytes = computeFileSize(node.path);
+        node.sizeBytes = bytes;
+        node.size = formatBytes(bytes);
+
         const meta = document.createElement('span');
         meta.className = 'row-meta';
-        meta.textContent = node.size || '';
+        meta.textContent = node.size;
         row.appendChild(meta);
 
         const moreBtn = document.createElement('button');
@@ -2122,6 +2164,7 @@
             editorModels.get(tab.path).setValue(currentContent);
           }
           fileContents[tab.path] = currentContent;
+          updateRowSize(tab.path);
           saveState();
         }
       }
@@ -2278,6 +2321,7 @@
         if (editorModels.has(tab.path)) {
           editorModels.get(tab.path).setValue(currentContent);
         }
+        updateRowSize(tab.path);
         saveState();
       }
     }
@@ -2390,6 +2434,7 @@
         type: 'file',
         name: name,
         size: '0 B',
+        sizeBytes: 0,
         path: (target.path || target.name) + '/' + name,
         modified: false
       };
@@ -3660,7 +3705,6 @@
           const fileNode = {
             type: 'file',
             name: fileName,
-            size: (item.size ? (item.size + ' B') : ''),
             path: filePath,
             modified: false
           };
@@ -3733,6 +3777,7 @@
             editor.setModel(emptyModel);
           }
 
+          recalcFileSizes();
           buildTree();
           saveState();
 
@@ -3774,6 +3819,7 @@
         const emptyModel = monaco.editor.createModel('', 'plaintext');
         editor.setModel(emptyModel);
       }
+      recalcFileSizes();
       buildTree();
       saveState();
     }
@@ -3805,7 +3851,6 @@
         const fileNode = {
           type: 'file',
           name: fileName,
-          size: item.size != null ? (item.size + ' B') : '',
           path: filePath,
           modified: false
         };
@@ -3890,7 +3935,7 @@
           const paths = [];
           for (const f of files) {
             const content = await readFileAsText(f);
-            paths.push({ path: f.name, content: content, size: f.size });
+            paths.push({ path: f.name, content: content });
           }
           const built = buildTreeFromPaths(paths);
           applyImportedFiles(built.tree, built.files);
@@ -3914,7 +3959,7 @@
           for (const f of files) {
             const rel = f.webkitRelativePath || f.name;
             const content = await readFileAsText(f);
-            paths.push({ path: rel, content: content, size: f.size });
+            paths.push({ path: rel, content: content });
             processed++;
             if (processed % 10 === 0) {
               progressEl.textContent = 'Reading ' + processed + '/' + files.length + '...';
@@ -3955,10 +4000,7 @@
           let processed = 0;
           for (const entryPath of entries) {
             const content = await zip.files[entryPath].async('string');
-            const size = zip.files[entryPath]._data && zip.files[entryPath]._data.uncompressedSize
-              ? zip.files[entryPath]._data.uncompressedSize
-              : content.length;
-            paths.push({ path: entryPath, content: content, size: size });
+            paths.push({ path: entryPath, content: content });
             processed++;
             if (processed % 10 === 0) {
               progressEl.textContent = 'Extracting ' + processed + '/' + entries.length + '...';
@@ -3981,6 +4023,8 @@
         tree = deepCopy(DEFAULT_TREE);
         fileContents = deepCopy(DEFAULT_FILES);
       }
+
+      recalcFileSizes();
 
       applyLayoutMode();
       window.addEventListener('resize', () => {
@@ -4235,6 +4279,7 @@
               tab.modified = true;
               fileContents[tab.path] = current;
               renderTabs();
+              updateRowSize(tab.path);
               saveState();
             }
           }
